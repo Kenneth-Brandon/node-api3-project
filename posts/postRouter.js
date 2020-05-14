@@ -3,6 +3,19 @@ const database = require('./postDb');
 
 const router = express.Router();
 
+router.post('/', validatePost, (request, response) => {
+  database
+    .insert(request.body)
+    .then((response) => {
+      response.status(201).json(response);
+    })
+    .catch((error) => {
+      response.status(500).json({
+        message: 'Database error: POST /',
+      });
+    });
+});
+
 router.get('/', (request, response) => {
   database
     .get()
@@ -68,6 +81,19 @@ function validatePostId(request, response, next) {
         message: 'Database error: GET /:id',
       });
     });
+}
+
+function validatePost(request, response, next) {
+  if (!request.body) {
+    response.status(400).json({
+      message: 'Missing post data.',
+    });
+  } else if (!request.body.text) {
+    response.status(400).json({
+      message: 'Missing required text field.',
+    });
+  }
+  next();
 }
 
 module.exports = router;
