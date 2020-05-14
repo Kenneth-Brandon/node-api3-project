@@ -16,7 +16,7 @@ router.post('/', (request, response) => {
     });
 });
 
-router.post('/:id/posts', validateUserId, (req, res) => {
+router.post('/:id/posts', validateUserId, validatePost, (request, response) => {
   // do your magic!
 });
 
@@ -35,8 +35,17 @@ router.get('/:id', validateUserId, (request, response) => {
   response.status(200).json(request.user);
 });
 
-router.get('/:id/posts', validateUserId, (req, res) => {
-  // do your magic!
+router.get('/:id/posts', validateUserId, (request, response) => {
+  database
+    .getUserPosts(request.user.id)
+    .then((response) => {
+      response.status(200).json(response);
+    })
+    .catch((error) => {
+      response.status(500).json({
+        message: 'Could not get user posts.',
+      });
+    });
 });
 
 router.delete('/:id', validateUserId, (request, response) => {
