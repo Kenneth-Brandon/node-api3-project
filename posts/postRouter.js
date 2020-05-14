@@ -1,99 +1,69 @@
 const express = require('express');
-const database = require('./postDb');
+const postDB = require('./postDb');
 
 const router = express.Router();
 
-router.post('/', validatePost, (request, response) => {
-  database
-    .insert(request.body)
-    .then((response) => {
-      response.status(201).json(response);
-    })
-    .catch((error) => {
-      response.status(500).json({
-        message: 'Database error: POST /',
-      });
-    });
-});
-
 router.get('/', (request, response) => {
-  database
-    .get()
-    .then((response) => {
-      response.status(200).json(response);
-    })
-    .catch((error) => {
-      response.status(500).json({
-        message: 'Database error: GET /',
-      });
-    });
+  try {
+    postDB.get().then((response) => response.send(response));
+  } catch {
+    response.status(500).json({ error: 'an error has occurred' });
+  }
 });
 
 router.get('/:id', validatePostId, (request, response) => {
-  response.status(200).json(request.response);
+  const id = request.params.id;
+  try {
+    postDB.getById(id).then((response) => response.send(response));
+  } catch {
+    response.status(500).json({ error: 'an error has occurred' });
+  }
 });
 
 router.delete('/:id', validatePostId, (request, response) => {
-  database
-    .remove(request.response.id)
-    .then((response) => {
-      request.status(200).json(response);
-    })
-    .catch((error) => {
-      response.status(404).json({
-        message: 'Unable to delete post.',
-      });
-    });
+  const id = request.params.id;
+  try {
+    postDB
+      .remove(id)
+      .then((response) => response.status(204).send({ success: response }));
+  } catch {
+    response.status(500).json({ error: 'an error has occurred' });
+  }
 });
 
-router.put('/:id', validatePostId, (request, response) => {
-  database
-    .update(request.response.id, request.body)
-    .then((response) => {
-      response.status(200).json(response);
-    })
-    .catch((error) => {
-      response.status(404).json({
-        message: 'Unable to edit post.',
-      });
-    });
+router.put('/:id', validatePostId, validatePost, (request, response) => {
+  const id = request.params.id;
+  try {
+    const postUpdate = {
+      text: request.body.text,
+    };
+    postDB
+      .update(id, postUpdate)
+      .then((response) => response.status(204).send({ success: response }));
+  } catch {
+    response.status(500).json({ error: 'an error has occurred' });
+  }
 });
 
 // custom middleware
 
 function validatePostId(request, response, next) {
-  let id = request.params.id;
-
-  database
-    .getById(id)
-    .then((response) => {
-      if (!response) {
-        response.status(400).json({
-          message: 'Invalid post id.',
-        });
-      } else {
-        request.response = response;
-        next();
-      }
-    })
-    .catch((error) => {
-      response.status(500).json({
-        message: 'Database error: GET /:id',
-      });
-    });
+  const id = request.params.id;
+  postDB.getById(id).then((response) => {
+    if (response) {
+      next();
+    } else {
+      response.status(400).json({ message: 'invalid post id' });
+    }
+  });
 }
 
 function validatePost(request, response, next) {
-  if (!request.body) {
-    response.status(400).json({
-      message: 'Missing post data.',
-    });
-  } else if (!request.body.text) {
-    response.status(400).json({
-      message: 'Missing required text field.',
-    });
+  if (request.body.text) {
+    next();
+  } else {
+    response.status(400).json({ message: 'missing required text field' });
   }
-  next();
 }
 
 module.exports = router;

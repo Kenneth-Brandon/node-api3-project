@@ -1,128 +1,114 @@
 const express = require('express');
-const database = require('./userDb');
+const userDB = require('./userDb');
+const postDB = require('../posts/postDb');
 
 const router = express.Router();
 
-router.post('/', (request, response) => {
-  database
-    .insert(request.body)
-    .then((response) => {
-      response.status(201).json(response);
-    })
-    .catch((error) => {
-      response.status(500).json({
-        message: 'Could not add user.',
-      });
-    });
+router.post('/', validateUser, (request, response) => {
+  try {
+    const newUser = {
+      name: request.body.name,
+    };
+    userDB.insert(newUser).then((response) => response.send(response));
+  } catch {
+    response.status(500).json({ error: 'an error has occurred' });
+  }
 });
 
-// moved to postRouter
-// router.post('/:id/posts', validateUserId, validatePost, (request, response) => {
-//   // do your magic!
-// });
+router.post('/:id/posts', validateUserId, validatePost, (request, response) => {
+  const id = request.params.id;
+  try {
+    const newPost = {
+      text: request.body.text,
+      user_id: id,
+    };
+    postDB.insert(newPost).then((response) => response.send(response));
+  } catch {
+    response.status(500).json({ error: 'an error has occurred' });
+  }
+});
 
 router.get('/', (request, response) => {
-  database
-    .get()
-    .then((response) => {
-      response.status(200).json(response);
-    })
-    .catch((error) => {
-      response.status(500).json({ message: 'Database error: GET /' });
-    });
+  try {
+    userDB.get().then((response) => response.send(response));
+  } catch {
+    response.status(500).json({ error: 'an error has occurred' });
+  }
 });
 
 router.get('/:id', validateUserId, (request, response) => {
-  response.status(200).json(request.user);
+  const id = request.params.id;
+  try {
+    userDB.getById(id).then((response) => response.send(response));
+  } catch {
+    response.status(500).json({ error: 'an error has occurred' });
+  }
 });
 
 router.get('/:id/posts', validateUserId, (request, response) => {
-  database
-    .getUserPosts(request.user.id)
-    .then((response) => {
-      response.status(200).json(response);
-    })
-    .catch((error) => {
-      response.status(500).json({
-        message: 'Could not get user posts.',
-      });
+  const id = request.params.id;
+  try {
+    postDB.get().then((response) => {
+      const userPosts = response.filter(
+        (post) => post.user_id === parseInt(id)
+      );
+      response.send(userPosts);
     });
+  } catch {
+    response.status(500).json({ error: 'an error has occurred' });
+  }
 });
 
 router.delete('/:id', validateUserId, (request, response) => {
-  database
-    .remove(request.user.id)
-    .then((response) => {
-      response.status(201).json(response);
-    })
-    .catch((error) => {
-      response.status(500).json({
-        message: 'Database error: DELETE /:id',
-      });
-    });
+  const id = request.params.id;
+  try {
+    userDB.remove(id).then((response) => response.send({ success: response }));
+  } catch {
+    response.status(500).json({ error: 'an error has occurred' });
+  }
 });
 
-router.put('/:id', validateUserId, (request, response) => {
-  database
-    .update(request.user.id, request.body)
-    .then((response) => {
-      response.status(200).json(response);
-    })
-    .catch((error) => {
-      response.status(500).json({
-        message: 'Database error: PUT /:id',
-      });
-    });
+router.put('/:id', validateUserId, validateUser, (request, response) => {
+  const id = request.params.id;
+  try {
+    const userUpdate = {
+      name: request.body.name,
+    };
+    userDB
+      .update(id, userUpdate)
+      .then((response) => response.send({ success: response }));
+  } catch {
+    response.status(500).json({ error: 'an error has occurred' });
+  }
 });
 
 //custom middleware
 
 function validateUserId(request, response, next) {
-  let id = request.params.id;
-
-  database
-    .getById(id)
-    .then((response) => {
-      if (!response) {
-        response.status(400).json({
-          message: 'Invalid user id.',
-        });
-      } else {
-        request.user = response;
-        next();
-      }
-    })
-    .catch((error) => {
-      response.status(500).json({
-        message: 'Database error: GET /:id.',
-      });
-    });
+  const id = request.params.id;
+  userDB.getById(id).then((response) => {
+    if (response) {
+      next();
+    } else {
+      response.status(400).json({ message: 'invalid user id' });
+    }
+  });
 }
 
 function validateUser(request, response, next) {
-  if (!request.body) {
-    response.status(400).json({
-      message: 'Missing user data.',
-    });
-  } else if (!request.body.name) {
-    response.status(400).json({
-      message: 'Missing required name field.',
-    });
+  if (request.body.name) {
     next();
+  } else {
+    response.status(400).json({ message: 'missing required name field' });
   }
 }
 
 function validatePost(request, response, next) {
-  if (!request.body) {
-    response.status(400).json({
-      message: 'Missing post data.',
-    });
-  } else if (!request.body.text) {
-    response.status(400).json({
-      message: 'Missing required text field.',
-    });
+  if (request.body.text) {
+    next();
+  } else {
+    response.status(400).json({ message: 'missing required text field' });
   }
-  next();
 }
 
 module.exports = router;
