@@ -20,12 +20,30 @@ router.get('/:id', validatePostId, (request, response) => {
   response.status(200).json(request.response);
 });
 
-router.delete('/:id', validatePostId, (req, res) => {
-  // do your magic!
+router.delete('/:id', validatePostId, (request, response) => {
+  database
+    .remove(request.response.id)
+    .then((response) => {
+      request.status(200).json(response);
+    })
+    .catch((error) => {
+      response.status(404).json({
+        message: 'Unable to delete post.',
+      });
+    });
 });
 
-router.put('/:id', validatePostId, (req, res) => {
-  // do your magic!
+router.put('/:id', validatePostId, (request, response) => {
+  database
+    .update(request.response.id, request.body)
+    .then((response) => {
+      response.status(200).json(response);
+    })
+    .catch((error) => {
+      response.status(404).json({
+        message: 'Unable to edit post.',
+      });
+    });
 });
 
 // custom middleware
