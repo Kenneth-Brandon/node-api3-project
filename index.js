@@ -12,8 +12,8 @@ server.use(express.json());
 server.use(helmet());
 server.use(morgan('dev'));
 
-server.use('/api/posts', postRouter);
-server.use('/api/users', userRouter);
+server.use('/api/posts', logger, postRouter);
+server.use('/api/users', logger, userRouter);
 
 server.get('/', logger, (request, response) => {
   response.send('<h1>User and Post API</h1>');
