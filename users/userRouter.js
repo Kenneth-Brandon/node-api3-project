@@ -3,8 +3,17 @@ const database = require('./userDb');
 
 const router = express.Router();
 
-router.post('/', (req, res) => {
-  // do your magic!
+router.post('/', (request, response) => {
+  database
+    .insert(request.body)
+    .then((response) => {
+      response.status(201).json(response);
+    })
+    .catch((error) => {
+      response.status(500).json({
+        message: 'Could not add user.',
+      });
+    });
 });
 
 router.post('/:id/posts', validateUserId, (req, res) => {
@@ -18,7 +27,7 @@ router.get('/', (request, response) => {
       response.status(200).json(response);
     })
     .catch((error) => {
-      response.status(500).json({ message: 'database error: GET /' });
+      response.status(500).json({ message: 'Database error: GET /' });
     });
 });
 
@@ -30,12 +39,30 @@ router.get('/:id/posts', validateUserId, (req, res) => {
   // do your magic!
 });
 
-router.delete('/:id', validateUserId, (req, res) => {
-  // do your magic!
+router.delete('/:id', validateUserId, (request, response) => {
+  database
+    .remove(request.user.id)
+    .then((response) => {
+      response.status(201).json(response);
+    })
+    .catch((error) => {
+      response.status(500).json({
+        message: 'Database error: DELETE /:id',
+      });
+    });
 });
 
-router.put('/:id', validateUserId, (req, res) => {
-  // do your magic!
+router.put('/:id', validateUserId, (request, response) => {
+  database
+    .update(request.user.id, request.body)
+    .then((response) => {
+      response.status(200).json(response);
+    })
+    .catch((error) => {
+      response.status(500).json({
+        message: 'Database error: PUT /:id',
+      });
+    });
 });
 
 //custom middleware
