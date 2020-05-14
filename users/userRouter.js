@@ -16,9 +16,10 @@ router.post('/', (request, response) => {
     });
 });
 
-router.post('/:id/posts', validateUserId, validatePost, (request, response) => {
-  // do your magic!
-});
+// moved to postRouter
+// router.post('/:id/posts', validateUserId, validatePost, (request, response) => {
+//   // do your magic!
+// });
 
 router.get('/', (request, response) => {
   database
