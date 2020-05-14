@@ -15,9 +15,20 @@ server.use(morgan('dev'));
 server.use('/api/posts', postRouter);
 server.use('/api/users', userRouter);
 
-server.get('/', (request, response) => {
+server.get('/', logger, (request, response) => {
   response.send('<h1>User and Post API</h1>');
 });
+
+function logger(request, response, next) {
+  let currentTime = new Date();
+  console.log(
+    request.method,
+    request.url,
+    'at',
+    currentTime.toLocaleTimeString()
+  );
+  next();
+}
 
 const PORT = 5000;
 
