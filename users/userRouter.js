@@ -28,14 +28,26 @@ router.post('/:id/posts', validateUserId, validatePost, (request, response) => {
   }
 });
 
-router.get('/', (request, response) => {
-  try {
-    userDB.get().then((response) => response.send(response));
-  } catch {
-    response.status(500).json({ error: 'an error has occurred' });
-  }
-});
+// router.get('/', (request, response) => {
+//   try {
+//     userDB.get().then((response) => response.send(response));
+//   } catch {
+//     response.status(500).json({ error: 'an error has occurred' });
+//   }
+// });
 
+router.get('/', validateUserId, (req, res) => {
+  // const { id } = req.params;
+  userDb
+    .get()
+    .then((user) => {
+      res.status(200).json(user);
+    })
+    .catch((error) => {
+      console.log(error);
+      res.status(500).json({ error: 'error getting users' });
+    });
+});
 router.get('/:id', validateUserId, (request, response) => {
   const id = request.params.id;
   try {
